@@ -14,14 +14,12 @@ class SharedPref {
     return _model;
   }
 
-
   saveEmployee(String key,Employee _employee) async {
     final prefs = await SharedPreferences.getInstance();
     List<String> stringList = prefs.getStringList(key)??[];
     stringList.add(json.encode(_employee));
     prefs.setStringList(key, stringList);
   }
-
 
   saveListEmployee(String key,List<Employee> _employee) async {
     final prefs = await SharedPreferences.getInstance();
@@ -44,6 +42,4 @@ class SharedPref {
     List<String> stringList = prefs.getStringList(key)??[];
     return stringList.length+1;
   }
-
-
 }

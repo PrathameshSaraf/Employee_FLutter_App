@@ -1,4 +1,4 @@
-
+import 'package:intl/intl.dart';
 import 'package:action_broadcast/action_broadcast.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_engineer/constants/app_colors.dart';
@@ -21,7 +21,25 @@ class _CreateScreenState extends State<CreateScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController positionController = TextEditingController();
   TextEditingController salaryController = TextEditingController();
-  TextEditingController yearsController = TextEditingController();
+  DateTime _selectedDate=DateTime.now();
+
+
+  void _presentDatePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2019),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    });
+    print(_selectedDate);
+  }
 
   final GlobalKey<ScaffoldState> _scaffoldKey=GlobalKey<ScaffoldState>();
   @override
@@ -73,7 +91,31 @@ class _CreateScreenState extends State<CreateScreen> {
                             });
                           },
                         ),
-                        formField('Working Years *', yearsController),
+                        Container(
+                          height: 70,
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Text(
+                                  _selectedDate == null
+                                      ? 'No Date Chosen!'
+                                      : 'Picked Date: ${DateFormat.yMd().format(
+                                      _selectedDate)}',
+                                ),
+                              ),
+                              TextButton(
+                                style: TextButton.styleFrom(primary: Colors.purple),
+                                child: Text(
+                                  'Choose Date',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: _presentDatePicker,
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(
                           height: 20,
                         ),
@@ -84,7 +126,7 @@ class _CreateScreenState extends State<CreateScreen> {
                             phoneNumberController.text.trim().isNotEmpty &&
                             positionController.text.trim().isNotEmpty &&
                             salaryController.text.trim().isNotEmpty &&
-                            yearsController.text.trim().isNotEmpty
+                                _selectedDate.toString().trim().isNotEmpty
                             ){
                               if(Utils.isValidEmail(emailController.text)){
                                 SharedPref sharedPref = SharedPref();
@@ -97,7 +139,7 @@ class _CreateScreenState extends State<CreateScreen> {
                                      email: emailController.text,
                                      postion: positionController.text,
                                      salary: double.parse(salaryController.text),
-                                     years: int.parse(yearsController.text),
+                                     years: int.parse(_selectedDate.toString()),
                                      isActive: true,
                                      
                                  ));

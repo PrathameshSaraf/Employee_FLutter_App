@@ -10,7 +10,7 @@ class Employee with ChangeNotifier{
   String email;
   String postion;
   double salary;
- int years;
+  int years;
   bool isActive;
   bool showButtons;
   Employee({
