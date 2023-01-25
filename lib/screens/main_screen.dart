@@ -1,8 +1,8 @@
-import 'package:action_broadcast/action_broadcast.dart';
+
 import 'package:flutter/material.dart';
 import 'package:mobile_engineer/constants/app_colors.dart';
 import 'package:mobile_engineer/constants/helper.dart';
-import 'package:mobile_engineer/data/sharedpreferences.dart';
+import 'package:mobile_engineer/data/DatabasedServie.dart';
 import 'package:mobile_engineer/model/employee_detail.dart';
 import 'package:mobile_engineer/widget/AppBar.dart';
 import 'package:mobile_engineer/widget/EmployeeCard.dart';
@@ -14,27 +14,37 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with AutoCancelStreamMixin{
+class _MainScreenState extends State<MainScreen> {
   List<Employee> employeesList = [];
-  SharedPref sharedPref = SharedPref();
+  final db = DatabaseServices();
+  bool _isloading=true;
   @override
   void initState() {
     // TODO: implement initState
-    super.initState();
-    employeesList.clear();
-    sharedPref.readEmployee(Utils.sharedPrefrencesEmployeeKey).then((value) {
+    getProducts();
 
-      setState(() {
-        employeesList.addAll(value);
-      });
+  }
+  getProducts()async {
+    final value=await db.getEmployeeData();
+    employeesList=value;
+    print(value);
+    setState(() {
+
     });
-
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey =  GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    if(employeesList.length>0){
+      setState(() {
+        _isloading=false;
+      });
+    }
+
+    return _isloading?const Center(
+      child: CircularProgressIndicator(),
+    ):SafeArea(
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: AppColors.white,
@@ -82,27 +92,10 @@ class _MainScreenState extends State<MainScreen> with AutoCancelStreamMixin{
                                     "The feature is not available at the moment.");
                               },
                               cardTap: () {
-                                employeesList.forEach((element) {
-                                  element.showButtons = false;
-                                });
-                                employee.showButtons = true;
-                                sharedPref.saveListEmployee(
-                                    Utils.sharedPrefrencesEmployeeKey, employeesList);
-                                setState(() {
-                                  employee.showButtons = true;
-                                });
+
                               },
                               deleteTap: () {
-                                Utils.showTwoButtonAlertDialog(context: context,
-                                    alertTitle: 'Delete Employee',
-                                    alertMsg: "Are you sure you want to delete the employee ?",
-                                    positiveText: 'Delete', negativeText: 'Cancel', yesTap: (){
-                                      setState(() {
-                                        employeesList.removeAt(index);
-                                      });
-                                      sharedPref.saveListEmployee(
-                                          Utils.sharedPrefrencesEmployeeKey, employeesList);
-                                    });
+
 
                               },
                             ),
@@ -119,23 +112,9 @@ class _MainScreenState extends State<MainScreen> with AutoCancelStreamMixin{
     );
   }
 
-  @override
-  Iterable<StreamSubscription> get registerSubscriptions sync* {
-    yield registerReceiver(
-        [Utils.actionEmployees
-        ]).listen(
-            (intent) async {
-          // // print("Receiver: " + intent.action);
-              employeesList.clear();
-          sharedPref.readEmployee(Utils.sharedPrefrencesEmployeeKey).then((value) {
-            setState(() {
-              employeesList.addAll(value);
-            });
-          });
-        }
-    );
+
   }
 
-}
+
 
 

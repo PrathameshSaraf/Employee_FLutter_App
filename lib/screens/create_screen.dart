@@ -1,10 +1,10 @@
 import 'package:intl/intl.dart';
-import 'package:action_broadcast/action_broadcast.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobile_engineer/constants/app_colors.dart';
 import 'package:mobile_engineer/constants/helper.dart';
-import 'package:mobile_engineer/data/sharedpreferences.dart';
-import 'package:mobile_engineer/model/employee_detail.dart';
+import 'package:mobile_engineer/data/DatabasedServie.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_engineer/widget/AppBar.dart';
 import 'package:mobile_engineer/widget/CustomTextField.dart';
 class CreateScreen extends StatefulWidget {
@@ -15,20 +15,33 @@ class CreateScreen extends StatefulWidget {
 }
 
 class _CreateScreenState extends State<CreateScreen> {
+  final db = DatabaseServices();
+  final st=Storageservice();
+  final ImagePicker _picker = ImagePicker();
+    TextEditingController fullNameController = TextEditingController();
+    TextEditingController phoneNumberController = TextEditingController();
+    TextEditingController emailController = TextEditingController();
 
-  TextEditingController fullNameController = TextEditingController();
-  TextEditingController phoneNumberController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController positionController = TextEditingController();
-  TextEditingController salaryController = TextEditingController();
-  DateTime _selectedDate=DateTime.now();
+    TextEditingController salaryController = TextEditingController();
+    DateTime _selectedDate=DateTime.now();
+  File? image;
 
-
+  pickImage(ImageSource source) async {
+    _picker.pickImage(source: source, maxHeight: 480, maxWidth: 480).then((i) {
+      final imageTemp = File(i!.path);
+      setState(() {
+        image = imageTemp;
+      });
+    }).catchError((e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Unable to get image")));
+    });
+  }
   void _presentDatePicker() {
     showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2019),
+      firstDate: DateTime(1998),
       lastDate: DateTime.now(),
     ).then((pickedDate) {
       if (pickedDate == null) {
@@ -40,7 +53,19 @@ class _CreateScreenState extends State<CreateScreen> {
     });
     print(_selectedDate);
   }
+  String _selectedRadio="Active";
+@override
+  void initState() {
+    // TODO: implement initState
+  super.initState();
+  _selectedRadio = "Active";
+}
 
+  setSelectedRadio(String val) {
+    setState(() {
+      _selectedRadio = val;
+    });
+  }
   final GlobalKey<ScaffoldState> _scaffoldKey=GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
@@ -75,22 +100,67 @@ class _CreateScreenState extends State<CreateScreen> {
                         const SizedBox(
                           height: 40,
                         ),
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(color: Colors.red[200]),
+                      child: image != null
+                          ? Image.network(
+                        image!.path,
+                        width: 200.0,
+                        height: 200.0,
+                        fit: BoxFit.fitHeight,
+                      ) : Container(
+                        decoration: BoxDecoration(color: Colors.white),
+                        width: 200,
+                        height: 200,
+                        child: IconButton(
+                          icon:Icon(Icons.camera_alt),
+
+                          onPressed: (){
+                             pickImage(ImageSource.gallery);
+                           // Navigator.pop(context);
+                          },
+                          color: Colors.grey[800],
+                        ),
+                      ),),
                         formField('Full Name *', fullNameController),
                         formField('Phone Number *', phoneNumberController),
                         formField('Email *', emailController),
-                        formField('Position *', positionController),
+
                         formField('Salary *', salaryController),
 
+                        Column(
+                          children: <Widget>[
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Employee type',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            RadioListTile(
+                              value: "Active",
+                              groupValue: _selectedRadio,
+                              onChanged: (val) {
+                                setSelectedRadio(val as String);
+                              },
+                              title: Text("Active"),
+                            ),
+                            RadioListTile(
+                              value: "Disactive",
+                              groupValue: _selectedRadio,
+                              onChanged: (val) {
+                                setSelectedRadio(val as String);
+                              },
+                              title: Text("Disactive"),
+                            ),
+                          ],
+                    ),
 
-                      RadioListTile(
-                          title: Text("Active"),
-                          value: "active",
-                          groupValue: "active",
-                          onChanged: (active){
-                            setState(() {
-                            });
-                          },
-                        ),
+
                         Container(
                           height: 70,
                           child: Row(
@@ -99,7 +169,7 @@ class _CreateScreenState extends State<CreateScreen> {
                                 child: Text(
                                   _selectedDate == null
                                       ? 'No Date Chosen!'
-                                      : 'Picked Date: ${DateFormat.yMd().format(
+                                      : 'Picked Joining Date : ${DateFormat.yMd().format(
                                       _selectedDate)}',
                                 ),
                               ),
@@ -124,31 +194,23 @@ class _CreateScreenState extends State<CreateScreen> {
                             if(fullNameController.text.trim().isNotEmpty &&
                             emailController.text.trim().isNotEmpty &&
                             phoneNumberController.text.trim().isNotEmpty &&
-                            positionController.text.trim().isNotEmpty &&
                             salaryController.text.trim().isNotEmpty &&
                                 _selectedDate.toString().trim().isNotEmpty
+
                             ){
-                              if(Utils.isValidEmail(emailController.text)){
-                                SharedPref sharedPref = SharedPref();
-                                int id =await sharedPref.listDataCount(Utils.sharedPrefrencesEmployeeKey);
-                                sharedPref.saveEmployee(Utils.sharedPrefrencesEmployeeKey,
-                                 Employee(
-                                     id: id,
-                                     fullName: fullNameController.text,
-                                     phoneNumber: phoneNumberController.text,
-                                     email: emailController.text,
-                                     postion: positionController.text,
-                                     salary: double.parse(salaryController.text),
-                                     years: int.parse(_selectedDate.toString()),
-                                     isActive: true,
-                                     
-                                 ));
-                                Navigator.pop(context);
-                                sendBroadcast(Utils.actionEmployees);
-                              }
-                              else{
-                                Utils.showToastMessage(Utils.msgEnterValidEmail);
-                              }
+                              print(fullNameController.text);
+                              print(emailController.text);
+                              print( phoneNumberController.text);
+                              print(salaryController.text);
+
+                              print(salaryController.text);
+                              print(_selectedDate.toString());
+                              print(_selectedRadio);
+
+                              db.addEmployee('', fullNameController.text, emailController.text, phoneNumberController.text,
+                                  double.parse(salaryController.text), context, _selectedDate,'',_selectedRadio).then((value) =>
+                               st.uploadImage(image!, value,context)
+                              );
                             }
                             else{
                               print('....');

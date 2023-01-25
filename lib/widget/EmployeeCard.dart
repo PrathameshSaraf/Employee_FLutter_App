@@ -33,7 +33,7 @@ class _EmployeeCardState extends State<EmployeeCard> {
 
   @override
   Widget build(BuildContext context) {
-
+print(widget.employee.imageurl);
     // print(widget.employee.years);
     return Container(
       width: double.infinity,
@@ -64,9 +64,12 @@ class _EmployeeCardState extends State<EmployeeCard> {
                 });
               }
             },
-            child: Image.asset(
-              'assets/profile_picture.png',
-              width: 130,
+            child:Image(
+              width: 100,
+              height: 200,
+              image: NetworkImage(
+                  widget.employee.imageurl
+              ),
             ),
           ),
 
@@ -117,20 +120,19 @@ class _EmployeeCardState extends State<EmployeeCard> {
                               const SizedBox(
                                 height: 13,
                               ),
-                              widget.employee.countyears() ? Icon(
+                                widget.employee.years>5?Icon(
                                 Icons.flag ,
                                 color: Colors.green,
                               size: 30.0,
-                              ):
-                              Icon(
-                                Icons.flag ,
-                                color: Colors.blue,
-                                size: 30.0,
-                              ),
+                              ):Icon(
+                                  Icons.flag ,
+                                  color: Colors.red,
+                                  size: 30.0,
+                                  )  ,
 
 
                               Text(
-                                widget.employee.postion,
+                               widget.employee.salary.toString(),
                                 overflow: TextOverflow.clip,
                                 maxLines: 1,
                                 style: TextStyle(
